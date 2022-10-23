@@ -1,54 +1,24 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using System.Net;
 using CarMiner.Context;
 using CarMiner.Entities;
-
 using System.Text.RegularExpressions;
 
 // the program is still in work, I want to rewrite to the form which a program should be look like
 public class Otomoto
 {
-    [SuppressMessage("ReSharper.DPA", "DPA0002: Excessive memory allocations in SOH", MessageId = "type: System.Collections.Generic.Dictionary`2[System.String,System.String]")]
-    [SuppressMessage("ReSharper.DPA", "DPA0004: Closure object allocation")]
     public static void Main(string[] args)
     {
-        // variables
-        List<string> offers = new List<string>();
-        string path = @"D:\Projects\CarMiner\Photos\"; // this must be specified where we want our photos to be saved
-        string html = "https://www.otomoto.pl/osobowe";
-        long start = GetTime();
-        HtmlWeb web = new();
         
-        // this code get's us the html of the site
-        // the while loop is to emilinate chance to get null response
-        while (true)
-        {
-            long end = GetTime();
-            if (end - start > 2000)
-            {
-                var nodes = web.Load(html).DocumentNode.SelectNodes("//a[@href]");
-                
-                if (nodes != null)
-                {
-                    foreach (var link in nodes)
-                    {
-                        string hrefValue = link.GetAttributeValue("href", string.Empty);
-                        
-                        if (hrefValue.Trim().StartsWith("https://www.otomoto.pl/oferta/") & !offers.Contains(hrefValue))
-                        {
-                            offers.Add(hrefValue);
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
+        
+        string html = "https://www.otomoto.pl/osobowe";
+        string path = "D:\\Projects\\CarMiner\\Photos\\";
+        var offers = GetMainSite(html);
+        
         // here open each offer separate
         foreach (string offerHtml in offers)
         {
-            start = GetTime();
+            var start = GetTime();
             Console.WriteLine(offerHtml);
             // again what above
             while (true)
@@ -59,6 +29,7 @@ public class Otomoto
 
                 if (end - start > 2000)
                 {
+                    HtmlWeb web = new();
                     var doc = web.Load(offerHtml);
                     IEnumerable<HtmlNode> id = doc.DocumentNode.Descendants(0).Where(n => n.HasClass("offer-meta__value")); // id value
                     string offerId = id.ElementAt(1).InnerText;
@@ -198,6 +169,39 @@ public class Otomoto
     {
         db.Models.Add(model);
         db.SaveChanges();
+    }
+
+    private static List<string> GetMainSite(string html)
+    {
+        long start = GetTime();
+        HtmlWeb web = new();
+        List<string> offers = new();
+        // this code get's us the html of the site
+        // the while loop is to emilinate chance to get null response
+        while (true)
+        {
+            long end = GetTime();
+            if (end - start > 2000)
+            {
+                var nodes = web.Load(html).DocumentNode.SelectNodes("//a[@href]");
+                
+                if (nodes != null)
+                {
+                    foreach (var link in nodes)
+                    {
+                        string hrefValue = link.GetAttributeValue("href", string.Empty);
+                        
+                        if (hrefValue.Trim().StartsWith("https://www.otomoto.pl/oferta/") & !offers.Contains(hrefValue))
+                        {
+                            offers.Add(hrefValue);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        return offers;
     }
 
 }
