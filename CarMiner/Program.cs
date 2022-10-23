@@ -43,11 +43,11 @@ public class Otomoto
                         .ElementAt(0).Descendants("img")
                         .Select(e => e.GetAttributeValue("src", null))
                         .Where(s => !String.IsNullOrEmpty(s));
-
+                    int price = GetPrice(doc);
                     //Creating directory for photos
                     Directory.CreateDirectory(path + offerId);
                     //Downloading photos to dir by offer_id
-                    download_images(urls, path, offerId);
+                    //download_images(urls, path, offerId);
 
                     foreach (HtmlNode node in doc.DocumentNode.Descendants(0).Where(n => n.HasClass("offer-params__list")))
                     {
@@ -55,6 +55,7 @@ public class Otomoto
                         foreach (HtmlNode htmlNode in node.Descendants(0).Where(n => n.HasClass("offer-params__label")))
                         {
                             string nameOfLabel = htmlNode.InnerText.ToLower();
+                            Console.WriteLine(htmlNode.InnerText);
                             string[] keyWords = { "marka pojazdu", "model pojazdu", "rok produkcji", "przebieg" ,"rodzaj paliwa", "moc" };
                             if (keyWords.Contains(nameOfLabel))
                             {
@@ -73,16 +74,16 @@ public class Otomoto
                         {
                             Brand brand = new Brand { Brandname = carParameters["marka pojazdu"] };
                             AddCarBrand(db, brand);
-
+                    
                             brand = db.Brands.FirstOrDefault(idadd =>
                                 idadd.Brandname == carParameters["marka pojazdu"])!;
                             Model model = new Model
                                 { Modelname = carParameters["model pojazdu"], IdbrandNavigation = brand };
                             AddCarModel(db, model);
-
+                    
                             model = db.Models.FirstOrDefault(idadd =>
                                 idadd.Modelname == carParameters["model pojazdu"])!;
-                            AddCar(db, carParameters, offerId, brand, model);
+                            AddCar(db, carParameters, offerId, brand, model, price);
                         }
                         // if brand exist but model not 
                         else if (!db.Models.Any(b => b.Modelname == carParameters["model pojazdu"]) &
@@ -93,10 +94,10 @@ public class Otomoto
                             Model model = new Model
                                 { Modelname = carParameters["model pojazdu"], IdbrandNavigation = brand };
                             AddCarModel(db, model);
-
+                    
                             model = db.Models.FirstOrDefault(idadd =>
                                 idadd.Modelname == carParameters["model pojazdu"])!;
-                            AddCar(db, carParameters, offerId, brand, model);
+                            AddCar(db, carParameters, offerId, brand, model, price);
                         }
                         else
                         {
@@ -104,7 +105,7 @@ public class Otomoto
                                 idadd.Brandname == carParameters["marka pojazdu"])!;
                             Model model = db.Models.FirstOrDefault(idadd =>
                                 idadd.Modelname == carParameters["model pojazdu"])!;
-                            AddCar(db, carParameters, offerId, brand, model);
+                            AddCar(db, carParameters, offerId, brand, model, price);
                         }
                     }
 
@@ -142,7 +143,7 @@ public class Otomoto
         return SWhitespace.Replace(input, replacement);
     }
 
-    private static void AddCar(carsContext db, Dictionary<string,string> carParameters, string offerId, Brand brand, Model model)
+    private static void AddCar(carsContext db, Dictionary<string,string> carParameters, string offerId, Brand brand, Model model, int price)
     {
         
             db.Adds.Add(new Add
@@ -153,7 +154,8 @@ public class Otomoto
                 Prodyear = Convert.ToInt32(carParameters["rok produkcji"]),
                 Fuel = carParameters["rodzaj paliwa"],
                 Mileage = carParameters["przebieg"],
-                Power = carParameters["moc"]
+                Power = carParameters["moc"],
+                //Price = price
             });
             db.SaveChanges();
         
@@ -202,6 +204,14 @@ public class Otomoto
         }
 
         return offers;
+    }
+
+    private static int GetPrice(HtmlDocument doc)
+    {
+        var price = doc.DocumentNode.Descendants(0).Where(n => n.HasClass("offer-price__number"));
+        var priceString = price.ElementAt(1).InnerText.Replace(" ", "");
+        priceString = priceString.Remove(priceString.Length - 4, 3);
+        return Int32.Parse(priceString);
     }
 
 }

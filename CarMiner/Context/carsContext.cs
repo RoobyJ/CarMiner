@@ -42,12 +42,12 @@ namespace CarMiner.Context
 
                 entity.ToTable("adds");
 
+                entity.HasIndex(e => e.Idbrand, "FKbrandadd_idx");
+
+                entity.HasIndex(e => e.Idmodel, "FKmodeladd_idx");
+
                 entity.HasIndex(e => e.Idadd, "idadd_UNIQUE")
                     .IsUnique();
-
-                entity.HasIndex(e => e.Idbrand, "idbrand_idx");
-
-                entity.HasIndex(e => e.Idmodel, "idmodel_idx");
 
                 entity.HasIndex(e => e.Idotomoto, "idotomoto_UNIQUE")
                     .IsUnique();
@@ -72,19 +72,21 @@ namespace CarMiner.Context
                     .HasMaxLength(45)
                     .HasColumnName("power");
 
+                entity.Property(e => e.Price).HasColumnName("price");
+
                 entity.Property(e => e.Prodyear).HasColumnName("prodyear");
 
                 entity.HasOne(d => d.IdbrandNavigation)
                     .WithMany(p => p.Adds)
                     .HasForeignKey(d => d.Idbrand)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FKbrandadds");
+                    .HasConstraintName("FKbrandadd");
 
                 entity.HasOne(d => d.IdmodelNavigation)
                     .WithMany(p => p.Adds)
                     .HasForeignKey(d => d.Idmodel)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FKmodeladds");
+                    .HasConstraintName("FKmodeladd");
             });
 
             modelBuilder.Entity<Brand>(entity =>
@@ -100,9 +102,7 @@ namespace CarMiner.Context
                 entity.HasIndex(e => e.Idbrand, "idbrands_UNIQUE")
                     .IsUnique();
 
-                entity.Property(e => e.Idbrand)
-                    .ValueGeneratedNever()
-                    .HasColumnName("idbrand");
+                entity.Property(e => e.Idbrand).HasColumnName("idbrand");
 
                 entity.Property(e => e.Brandname)
                     .HasMaxLength(45)
@@ -116,7 +116,7 @@ namespace CarMiner.Context
 
                 entity.ToTable("models");
 
-                entity.HasIndex(e => e.Idbrand, "idbrand_idx");
+                entity.HasIndex(e => e.Idbrand, "FKmodelbrand_idx");
 
                 entity.HasIndex(e => e.Idmodel, "idmodels_UNIQUE")
                     .IsUnique();
@@ -136,7 +136,7 @@ namespace CarMiner.Context
                     .WithMany(p => p.Models)
                     .HasForeignKey(d => d.Idbrand)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FKbrand");
+                    .HasConstraintName("FKbrandmodel");
             });
 
             OnModelCreatingPartial(modelBuilder);
